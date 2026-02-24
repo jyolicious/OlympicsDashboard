@@ -16,7 +16,7 @@ ChartJS.register(
   Tooltip, Legend, Filler
 );
 
-const API = "http://127.0.0.1:8000";
+const API = "https://olympicsdashboard.onrender.com";
 
 const COLORS = {
   gold: "#FFD700",
