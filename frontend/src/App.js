@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState} from "react";
 import axios from "axios";
 import {
-  Bar, Pie, Line, Radar, Doughnut
+  Bar, Pie, Line, Doughnut
 } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -263,7 +263,6 @@ function PredictorPanel() {
 export default function App() {
   const [countries, setCountries] = useState([]);
   const [sports, setSports] = useState([]);
-  const [years, setYears] = useState([]);
 
   // Filters
   const [filterCountry, setFilterCountry] = useState("");
