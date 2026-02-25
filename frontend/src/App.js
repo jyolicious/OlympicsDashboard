@@ -286,7 +286,6 @@ export default function App() {
   useEffect(() => {
     axios.get(`${API}/filters/countries`).then(r => setCountries(r.data.countries));
     axios.get(`${API}/filters/sports`).then(r => setSports(r.data.sports));
-    axios.get(`${API}/filters/years`).then(r => setYears(r.data.years));
     axios.get(`${API}/train-model`).then(r => setModelAcc(r.data.accuracy));
     axios.get(`${API}/gender-over-time`, { params: { season: "Summer" } }).then(r => setGenderTime(r.data));
   }, []);
