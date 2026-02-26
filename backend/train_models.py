@@ -27,7 +27,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 lr = LogisticRegression(max_iter=1000)
 lr.fit(X_train, y_train)
 
-rf = RandomForestClassifier(n_estimators=50, random_state=42)
+rf = RandomForestClassifier(n_estimators=10,max_depth=8,random_state=42)
 rf.fit(X_train, y_train)
 
 print("LR Accuracy:", accuracy_score(y_test, lr.predict(X_test)))
