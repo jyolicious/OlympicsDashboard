@@ -14,7 +14,7 @@ build/
 # Virtual environment
 venv/
 .env
-
+.csv
 # VS Code
 .vscode/
 

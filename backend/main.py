@@ -1,11 +1,8 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import numpy as np
+import pickle
 
 
 app = FastAPI()
@@ -25,33 +22,13 @@ athletes = pd.read_csv("athlete_events.csv")
 regions = pd.read_csv("noc_regions.csv")
 df = athletes.merge(regions, on="NOC", how="left")
 
-# === Train models ONCE at startup — never retrain per request ===
-print("Training models at startup, please wait...")
-
-_mdf = df[["Age", "Sex", "Height", "Weight", "Medal"]].copy()
-_mdf = _mdf.dropna(subset=["Age", "Sex"])
-_mdf["Height"] = _mdf["Height"].fillna(_mdf["Height"].median())
-_mdf["Weight"] = _mdf["Weight"].fillna(_mdf["Weight"].median())
-_mdf["Sex"] = _mdf["Sex"].map({"F": 0, "M": 1})   # deterministic: F=0, M=1
-_mdf["Medal"] = _mdf["Medal"].notna().astype(int)
-
-_X = _mdf[["Age", "Sex", "Height", "Weight"]]
-_y = _mdf["Medal"]
-
-_X_train, _X_test, _y_train, _y_test = train_test_split(
-    _X, _y, test_size=0.2, stratify=_y, random_state=42
-)
-
-_lr = LogisticRegression(max_iter=1000)
-_lr.fit(_X_train, _y_train)
-_lr_acc = accuracy_score(_y_test, _lr.predict(_X_test))
-
-# n_jobs=-1 uses all CPU cores; 50 trees is fast and accurate enough
-_rf = RandomForestClassifier(n_estimators=50, random_state=42, n_jobs=-1)
-_rf.fit(_X_train, _y_train)
-_rf_acc = accuracy_score(_y_test, _rf.predict(_X_test))
-
-print(f"LR accuracy: {_lr_acc:.3f} | RF accuracy: {_rf_acc:.3f} | Models ready!")
+# ===============================
+# Load Pre-Trained Models (NO TRAINING)
+# ===============================
+print("Loading pre-trained models...")
+_lr = pickle.load(open("lr_model.pkl", "rb"))
+_rf = pickle.load(open("rf_model.pkl", "rb"))
+print("Models loaded successfully.")
 
 
 # === Filters ===
@@ -156,18 +133,16 @@ def athlete_count_over_time(season: str = Query("Summer")):
     return fdf.drop_duplicates(subset=["ID","Year"]).groupby("Year").size().sort_index().to_dict()
 
 
-# === ML Endpoints — instant, uses cached models ===
+# === ML Endpoints — uses loaded PKL models ===
 
 @app.get("/train-model")
 def train_model():
     coef = dict(zip(["Age", "Sex", "Height", "Weight"], _lr.coef_[0].tolist()))
     importance = dict(zip(["Age", "Sex", "Height", "Weight"], _rf.feature_importances_.tolist()))
     return {
-        "accuracy": float(_lr_acc),
-        "rf_accuracy": float(_rf_acc),
         "features": coef,
         "feature_importance": importance,
-        "model": "Logistic Regression + Random Forest"
+        "model": "Pre-trained Logistic Regression + Random Forest"
     }
 
 @app.get("/predict-medal")
@@ -177,7 +152,6 @@ def predict_medal(
     height: float = Query(170),
     weight: float = Query(70)
 ):
-    # Sex: F=0, M=1 — matches startup encoding exactly
     sex_enc = 1 if sex.strip().upper() == "M" else 0
     inp = np.array([[age, sex_enc, height, weight]])
     prob = _rf.predict_proba(inp)[0][1]
