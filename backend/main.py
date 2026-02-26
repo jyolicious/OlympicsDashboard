@@ -17,10 +17,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load datasets
-athletes = pd.read_csv("athlete_events.csv")
-regions = pd.read_csv("noc_regions.csv")
-df = athletes.merge(regions, on="NOC", how="left")
 
 # ===============================
 # Load Pre-Trained Models (NO TRAINING)
